@@ -4,7 +4,6 @@ from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator
 import numpy as np
 import flyr
-import numpy as np
 from pathlib import Path
 import glob
 import os
@@ -34,13 +33,19 @@ def save_uploaded_file(uploaded_file):
     return file_path
 
 def main():
-    st.title("Object Detection with YOLOv8 and Streamlit")
+    st.title(":rainbow[Object Detection with YOLOv8 and Streamlit]")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-    file_bytes = uploaded_file.read()
+    #file_bytes = uploaded_file.read()
 
     if uploaded_file is not None:
+        file_bytes = uploaded_file.read()
+        with open(os.path.join(r"C:\Users\kumar\OneDrive\Desktop\ml_project_3\image",uploaded_file.name),"wb") as f: 
+            f.write(uploaded_file.getbuffer())         
+        #st.success("Saved File")
+       
+
         temp_file_path = save_uploaded_file(uploaded_file)
-        st.write(temp_file_path)
+        #st.write(temp_file_path)
 
         st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
         st.write("")
@@ -57,7 +62,7 @@ def main():
 
 
         #
-        st.write(temp_file_path)
+        #st.write(temp_file_path)
         #temp_file_path = temp_file_path.replace("\\", "\\\\")
         #directory_path = os.path.dirname(temp_file_path)
 
@@ -65,45 +70,52 @@ def main():
         #st.write(directory_with_wildcard)
 
         flir_imgs=glob.glob(temp_file_path)
-        st.write(len(flir_imgs))
-        for flir_img in flir_imgs:
-            thermogram = flyr.unpack(flir_img)
-            
-            
-            result = results[0]
-            box = result.boxes[0]
-            cords = box.xyxy[0].tolist()
-            cords = [round(x) for x in cords]
-            class_id = result.names[box.cls[0].item()]
-            conf = round(box.conf[0].item(), 2)
-            x1, y1, x2, y2 = cords
-            width=(x2-x1)
-            height=(y2-y1)
-            pixel_area=height*width
-            actual_area=0.08 # area of the laptop in meter
-            area_pixel=actual_area/409600 # actual area of each pixel in meter
-            hotspot_area=area_pixel*pixel_area
-            
-            # flir_path = "FLIR9813.jpg"
-            
+        #st.write(len(flir_imgs))
 
-            thermal_celsius = thermogram.celsius
-            max=np.max(thermal_celsius)
-            min=np.min(thermal_celsius) 
-            temperature= (max*8 + min*2)/10
+        
+        
+        flir_path= os.path.join(r"C:\Users\kumar\OneDrive\Desktop\ml_project_3\image",uploaded_file.name)
+        #st.write(flir_path)
+    
+        thermogram = flyr.unpack(flir_path)
+        
+        
+        result = results[0]
+        box = result.boxes[0]
+        cords = box.xyxy[0].tolist()
+        cords = [round(x) for x in cords]
+        class_id = result.names[box.cls[0].item()]
+        conf = round(box.conf[0].item(), 2)
+        x1, y1, x2, y2 = cords
+        width=(x2-x1)
+        height=(y2-y1)
+        pixel_area=height*width
+        actual_area=0.08 # area of the laptop in meter
+        area_pixel=actual_area/409600 # actual area of each pixel in meter
+        hotspot_area=area_pixel*pixel_area
+        
+        # flir_path = "FLIR9813.jpg"
+        
 
-            # Given values
-            emissivity = 0.95
+        thermal_celsius = thermogram.celsius
+        max=np.max(thermal_celsius)
+        min=np.min(thermal_celsius) 
+        temperature= (max*8 + min*2)/10
+        cold_temp=(max*2 + min*8)/10
 
-            # Convert temperature to Kelvin
-            temperature_kelvin = temperature + 273.15
+        # Given values
+        emissivity = 0.95
 
-            # Stefan-Boltzmann constant
-            stefan_boltzmann_constant = 5.67e-8  # in W m^-2 K^-4
+        # Convert temperature to Kelvin
+        temperature_kelvin = temperature + 273.15
+        cold_temperature_kelvin=cold_temp + 273.15
+        # Stefan-Boltzmann constant
+        stefan_boltzmann_constant = 5.67e-8  # in W m^-2 K^-4
 
-            # Calculate power (energy per unit time) emitted
-            power_emitted = emissivity * stefan_boltzmann_constant * hotspot_area * temperature_kelvin**4
-            st.write("The Energy Emmitted in the hotspot region is :",power_emitted)
+        # Calculate power (energy per unit time) emitted
+        power_emitted = emissivity * stefan_boltzmann_constant * hotspot_area * temperature_kelvin**4
+        cold_power_emitted = emissivity * stefan_boltzmann_constant * hotspot_area * cold_temperature_kelvin**4
+        st.write("The Energy Emmitted in the hotspot region is :",power_emitted)
 
 
 
