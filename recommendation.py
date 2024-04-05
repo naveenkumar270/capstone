@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-from bs4 import BeautifulSoup
 
 def main():
     st.title(":rainbow[Select Tasks and Their Respective Percentages]")
